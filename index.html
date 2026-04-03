@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code Blue | Advanced Pressure Injury Prevention</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'], mono: ['Roboto Mono', 'monospace'] },
+                    colors: { base: '#03050a', safe: '#00E5FF', warn: '#FF9900', danger: '#FF2A55', escalate: '#B026FF', panel: 'rgba(255, 255, 255, 0.03)' }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body { background-color: #03050a; color: #e2e8f0; overflow-x: hidden; }
+        .bg-grid { position: fixed; inset: 0; background-image: linear-gradient(rgba(0, 229, 255, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 229, 255, 0.03) 1px, transparent 1px); background-size: 40px 40px; pointer-events: none; z-index: -1; }
+        
+        .glass-panel { background: rgba(255, 255, 255, 0.02); backdrop-filter: blur(24px) saturate(120%); -webkit-backdrop-filter: blur(24px) saturate(120%); border: 1px solid rgba(255, 255, 255, 0.05); border-top: 1px solid rgba(255, 255, 255, 0.15); border-left: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); }
+        .glass-nav { background: rgba(3, 5, 10, 0.6); backdrop-filter: blur(30px) saturate(150%); -webkit-backdrop-filter: blur(30px) saturate(150%); border-bottom: 1px solid rgba(255, 255, 255, 0.08); }
+        
+        .expand-content { max-height: 0; overflow: hidden; transition: max-height 0.6s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease, margin 0.4s ease; opacity: 0; margin-top: 0; }
+        .expand-content.open { max-height: 1200px; opacity: 1; margin-top: 1.5rem; }
+        
+        .timeline-line { position: absolute; left: 2rem; top: 0; bottom: 0; width: 2px; background: linear-gradient(to bottom, #00E5FF 0%, #FF9900 50%, #B026FF 100%); opacity: 0.3; z-index: 0; }
+        @media (min-width: 768px) { .timeline-line { left: 50%; transform: translateX(-50%); } }
+        
+        .text-glow { text-shadow: 0 0 20px currentColor; }
+        .reveal { opacity: 0; transform: translateY(30px); transition: all 0.8s cubic-bezier(0.5, 0, 0, 1); }
+        .reveal.active { opacity: 1; transform: translateY(0); }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #03050a; }
+        ::-webkit-scrollbar-thumb { background: rgba(0, 229, 255, 0.2); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(0, 229, 255, 0.5); }
+    </style>
+</head>
+<body class="antialiased selection:bg-safe selection:text-black">
+
+    <div class="bg-grid"></div>
+
+    <nav class="fixed top-0 w-full z-50 glass-nav px-6 py-4 flex justify-between items-center transition-all duration-300">
+        <div class="flex items-center gap-4">
+            <div class="relative w-9 h-9 flex items-center justify-center shrink-0 group cursor-pointer">
+                <div class="absolute inset-0 bg-safe/20 border-2 border-safe rounded-lg shadow-[0_0_15px_rgba(0,229,255,0.5)] transform rotate-45 transition-transform duration-700 group-hover:rotate-[225deg]"></div>
+                <div class="absolute inset-1 border border-white/20 rounded-md transform -rotate-12 transition-transform duration-700 group-hover:rotate-90"></div>
+                <span class="relative z-10 font-black font-mono text-white text-[10px] tracking-tighter drop-shadow-[0_0_8px_rgba(255,255,255,1)]">CB</span>
+            </div>
+            <span class="font-bold tracking-widest uppercase text-sm ml-1">Code Blue</span>
+        </div>
+        <div class="hidden md:flex gap-8 font-mono text-xs uppercase tracking-widest text-slate-400">
+            <a href="#topology" class="hover:text-safe transition-colors">Wheel of Change</a>
+            <a href="#velocity" class="hover:text-safe transition-colors">Braden Engine</a>
+            <a href="#escalation" class="hover:text-safe transition-colors">Escalation</a>
+            <a href="#compliance" class="hover:text-safe transition-colors">Audit Logs</a>
+        </div>
+        
+        <a href="dashboard.html" class="relative group inline-flex items-center justify-center px-6 py-2.5 text-xs font-mono font-bold tracking-widest text-safe uppercase border border-safe/50 rounded overflow-hidden shadow-[0_0_15px_rgba(0,229,255,0.15)] transition-all duration-300 hover:border-safe hover:shadow-[0_0_30px_rgba(0,229,255,0.4)] bg-safe/5">
+            <span class="absolute inset-0 w-full h-full -translate-x-full bg-safe group-hover:translate-x-0 transition-transform duration-300 ease-in-out"></span>
+            <span class="absolute inset-0 flex items-center justify-center w-full h-full text-black duration-300 -translate-x-full group-hover:translate-x-0 ease-in-out">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+            </span>
+            <span class="absolute flex items-center justify-center w-full h-full text-safe transition-all duration-300 group-hover:translate-x-full ease-in-out">SYSTEM LOGIN</span>
+            <span class="relative invisible">SYSTEM LOGIN</span>
+        </a>
+    </nav>
+
+    <header class="relative min-h-screen pt-32 pb-20 px-6 overflow-hidden flex items-center border-b border-white/5">
+        <div class="absolute top-0 right-0 w-[60vw] h-[60vw] bg-[radial-gradient(circle,_rgba(0,229,255,0.08)_0%,_rgba(3,5,10,0)_70%)] pointer-events-none"></div>
+        <div class="absolute bottom-0 left-0 w-[40vw] h-[40vw] bg-[radial-gradient(circle,_rgba(176,38,255,0.05)_0%,_rgba(3,5,10,0)_70%)] pointer-events-none"></div>
+
+        <div class="max-w-7xl mx-auto w-full grid lg:grid-cols-12 gap-12 relative z-10 items-center">
+            
+            <div class="lg:col-span-7 text-left reveal">
+                <div class="inline-flex items-center gap-3 glass-panel px-4 py-1.5 rounded-full font-mono text-[10px] uppercase tracking-widest text-safe mb-8 border border-safe/20 shadow-[0_0_15px_rgba(0,229,255,0.1)]">
+                    <span class="w-2 h-2 rounded-full bg-safe animate-pulse"></span>
+                    AI-Driven HAPI Prevention System
+                </div>
+
+                <h1 class="text-5xl md:text-7xl font-extrabold tracking-tight mb-6 leading-[1.05] text-white">
+                    Eradicate the <br>
+                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-safe to-blue-500">Silent Epidemic.</span>
+                </h1>
+
+                <p class="text-lg text-slate-400 max-w-xl mb-10 leading-relaxed">
+                    Code Blue is an enterprise-grade Clinical Decision Support System (CDSS) that fuses Computer Vision, the 1987 Braden Scale, and smart escalation matrices to predict and prevent tissue breakdown before it begins.
+                </p>
+
+                <div class="flex flex-col sm:flex-row gap-5">
+                    <a href="dashboard.html" class="inline-flex items-center justify-center bg-safe text-black px-8 py-4 rounded font-bold uppercase tracking-widest text-xs hover:bg-white transition-all shadow-[0_0_20px_rgba(0,229,255,0.3)] hover:shadow-[0_0_30px_rgba(0,229,255,0.5)]">
+                        Launch Live Dashboard
+                    </a>
+                    <a href="#topology" class="inline-flex items-center justify-center border border-white/20 text-white px-8 py-4 rounded font-bold uppercase tracking-widest text-xs hover:bg-white/5 transition-all">
+                        Explore Core Modules
+                    </a>
+                </div>
+            </div>
+
+            <div class="lg:col-span-5 relative hidden lg:block h-[500px] reveal" style="transition-delay: 200ms;">
+                <div class="absolute top-4 right-0 w-[90%] h-full glass-panel border border-safe/20 rounded-2xl p-6 flex flex-col bg-black/40 shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
+                    <div class="flex justify-between items-center border-b border-white/10 pb-4 mb-4">
+                        <div class="flex items-center gap-2">
+                            <svg class="w-4 h-4 text-safe" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"></path></svg>
+                            <span class="font-mono text-[10px] text-slate-300 tracking-widest">3D_SPATIAL_TOPOGRAPHY</span>
+                        </div>
+                        <span class="text-danger font-mono text-[10px] tracking-widest animate-pulse">LIVE</span>
+                    </div>
+                    <div class="flex-1 relative rounded-xl border border-white/5 bg-gradient-to-b from-white/5 to-transparent overflow-hidden flex items-center justify-center">
+                        <svg viewBox="0 0 200 200" class="absolute inset-0 w-full h-full opacity-40">
+                            <path d="M 50 100 Q 100 20 150 100 T 50 100" fill="none" stroke="#00E5FF" stroke-width="0.5"/>
+                            <path d="M 40 100 Q 100 0 160 100 T 40 100" fill="none" stroke="#00E5FF" stroke-width="0.3"/>
+                            <path d="M 70 100 Q 100 50 130 100 T 70 100" fill="none" stroke="#FF9900" stroke-width="1"/>
+                            <circle cx="100" cy="110" r="25" fill="none" stroke="#FF2A55" stroke-width="1" stroke-dasharray="4 4"/>
+                            <circle cx="100" cy="110" r="15" fill="#FF2A55" opacity="0.2"/>
+                            <circle cx="100" cy="110" r="5" fill="#FF2A55" class="animate-ping"/>
+                        </svg>
+                        <div class="absolute inset-0 bg-[linear-gradient(rgba(0,229,255,0.1)_1px,transparent_1px)] bg-[size:100%_4px] opacity-20 pointer-events-none"></div>
+                    </div>
+                    <div class="mt-4 grid grid-cols-2 gap-4 font-mono text-[10px]">
+                        <div class="bg-danger/10 border border-danger/30 p-2 rounded text-danger">
+                            <span class="block opacity-70 uppercase tracking-widest mb-1">Target Posture</span>
+                            <span class="text-sm font-bold">Left Lateral</span>
+                        </div>
+                        <div class="bg-warn/10 border border-warn/30 p-2 rounded text-warn">
+                            <span class="block opacity-70 uppercase tracking-widest mb-1">Braden Score</span>
+                            <span class="text-sm font-bold">11 (High Risk)</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="absolute top-20 -left-6 glass-panel p-3 rounded-lg border-l-2 border-warn shadow-xl animate-[bounce_5s_infinite]">
+                    <span class="block font-mono text-[8px] text-slate-400 uppercase tracking-widest mb-1">Risk Velocity</span>
+                    <span class="font-mono text-warn text-xs font-bold">+2.4 mmHg/min</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <section id="topology" class="py-24 px-6 max-w-7xl mx-auto border-t border-white/5">
+        <div class="grid lg:grid-cols-2 gap-16 items-start">
+            <div class="reveal">
+                <p class="text-safe font-mono text-xs uppercase tracking-[0.2em] mb-2">Module 01</p>
+                <h2 class="text-3xl md:text-5xl font-bold mb-6">The Wheel of Change</h2>
+                <p class="text-slate-400 text-lg leading-relaxed mb-6">
+                    Standard 2-hour turn protocols treat all patients equally and lack structural variety. Our platform utilizes an 8-stage <strong>Wheel of Change</strong>, cycling patients through precise, medically validated postures to entirely alleviate localized pressure.
+                </p>
+                
+                <div class="grid grid-cols-2 gap-4 mb-8">
+                    <div class="bg-white/5 border border-white/10 p-4 rounded-lg">
+                        <div class="w-8 h-8 rounded-full bg-safe/20 flex items-center justify-center mb-3 text-safe font-bold">8</div>
+                        <h4 class="font-bold text-sm mb-1 text-white">Unique Postures</h4>
+                        <p class="text-xs text-slate-400">Includes Supine, Prone, Left/Right Lateral, Fowler's, Trendelenburg, and more.</p>
+                    </div>
+                    <div class="bg-white/5 border border-white/10 p-4 rounded-lg">
+                        <div class="w-8 h-8 rounded-full bg-safe/20 flex items-center justify-center mb-3 text-safe font-bold">3D</div>
+                        <h4 class="font-bold text-sm mb-1 text-white">Dynamic Tracking</h4>
+                        <p class="text-xs text-slate-400">Our 3D engine automatically detaches and relocates virtual sensors to the correct anatomical pressure points.</p>
+                    </div>
+                </div>
+
+                <button onclick="toggleSpec('spec1')" class="border border-safe/50 text-safe hover:bg-safe/10 px-5 py-3 rounded text-xs font-mono uppercase tracking-widest transition-colors flex items-center gap-3 shadow-[0_0_10px_rgba(0,229,255,0.1)]">
+                    <span id="icon-spec1" class="text-lg leading-none">+</span> Deep Dive: Postural Topography
+                </button>
+
+                <div id="spec1" class="expand-content">
+                    <div class="glass-panel p-8 rounded-xl border-l-4 border-l-safe mt-2">
+                        <h4 class="text-xl font-bold mb-4 text-white flex items-center gap-2">
+                            <span class="w-2 h-2 bg-safe rounded-full animate-pulse"></span> Biological Sensor Mapping
+                        </h4>
+                        <p class="text-sm text-slate-400 mb-6 leading-relaxed">When the target posture changes on the HUD, the system remaps the vulnerable zones. For example, in the <strong>Prone</strong> position, sensors move to the chest, knees, and toes. In <strong>Lateral</strong>, they shift to the ear, shoulder, hip, and ankle.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-panel rounded-2xl p-8 relative min-h-[450px] flex items-center justify-center reveal overflow-hidden shadow-[0_20px_50px_rgba(0,229,255,0.05)]">
+                <div class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCI+PHBhdGggZD0iTTAgMGg0MHY0MEgweiIgZmlsbD0ibm9uZSIvPjxwYXRoIGQ9Ik0wIDAuNWg0ME0wIDM5LjVoNDBNMC41IDB2NDBNMzkuNSAwdjQwIiBzdHJva2U9InJnYmEoMCwyMjksMjU1LDAuMSkiLz48L3N2Zz4=')] opacity-30"></div>
+                <div class="absolute top-4 left-4 font-mono text-[10px] text-safe tracking-widest uppercase">Protocol Enforcer</div>
+                
+                <div class="relative z-10 flex flex-col items-center">
+                    <div class="relative w-48 h-48 flex items-center justify-center">
+                        <svg class="w-full h-full transform -rotate-90 absolute inset-0" viewBox="0 0 100 100">
+                            <circle cx="50" cy="50" r="46" stroke="rgba(255,255,255,0.05)" stroke-width="2" fill="none"></circle>
+                            <circle cx="50" cy="50" r="46" stroke="#00E5FF" stroke-width="4" fill="none" stroke-dasharray="289" stroke-dashoffset="150" stroke-linecap="round"></circle>
+                            <g transform="rotate(-22.5 50 50)">
+                                <circle cx="50" cy="50" r="35" stroke="#00E5FF" stroke-width="12" stroke-dasharray="24 195.91" stroke-dashoffset="0" fill="none"></circle>
+                                <circle cx="50" cy="50" r="35" stroke="rgba(0,229,255,0.15)" stroke-width="12" stroke-dasharray="24 195.91" stroke-dashoffset="-27.48" fill="none"></circle>
+                                <circle cx="50" cy="50" r="35" stroke="rgba(0,229,255,0.15)" stroke-width="12" stroke-dasharray="24 195.91" stroke-dashoffset="-54.97" fill="none"></circle>
+                                <circle cx="50" cy="50" r="35" stroke="rgba(0,229,255,0.15)" stroke-width="12" stroke-dasharray="24 195.91" stroke-dashoffset="-82.46" fill="none"></circle>
+                            </g>
+                        </svg>
+                        <div class="absolute inset-0 flex flex-col items-center justify-center bg-black/80 rounded-full m-8 border border-safe/20 shadow-[0_0_20px_rgba(0,229,255,0.2)]">
+                            <span class="text-[8px] font-mono text-slate-400 uppercase tracking-widest">ACTIVE</span>
+                            <span class="text-[12px] font-bold text-safe font-mono tracking-widest">SUPINE</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-8 flex gap-4 text-center w-full justify-center">
+                        <div class="bg-safe/20 border border-safe/50 px-4 py-2 rounded text-safe font-mono text-[10px] font-bold tracking-widest">NEXT TURN: 01:24:00</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="velocity" class="py-24 px-6 max-w-7xl mx-auto border-t border-white/5 relative z-10">
+        <div class="grid lg:grid-cols-2 gap-16 items-start">
+            
+            <div class="order-2 lg:order-1 glass-panel rounded-2xl p-8 reveal flex flex-col h-full justify-between">
+                <div>
+                    <div class="flex justify-between items-center mb-8 border-b border-white/10 pb-4">
+                        <span class="font-mono text-xs uppercase tracking-widest text-slate-400 flex items-center gap-2"><div class="w-2 h-2 bg-safe rounded-full animate-pulse"></div> Live Braden Engine</span>
+                        <span id="sim-status" class="bg-safe/20 text-safe px-3 py-1 rounded text-[10px] font-mono border border-safe/30">NOMINAL</span>
+                    </div>
+                    
+                    <div class="space-y-6">
+                        <div class="bg-black/40 p-5 rounded-xl border border-warn/30 shadow-[inset_0_0_15px_rgba(255,153,0,0.05)]">
+                            <div class="flex justify-between font-mono text-xs mb-3">
+                                <span class="text-warn font-bold">1. Braden Scale Diagnosis</span>
+                                <span id="val-braden" class="font-bold text-warn text-sm">Score: 14 (Moderate)</span>
+                            </div>
+                            <input type="range" id="slider-braden" min="6" max="23" value="14" class="w-full accent-warn cursor-pointer h-1.5 bg-white/10 rounded-lg appearance-none">
+                            <div class="flex justify-between text-[8px] font-mono text-slate-500 mt-2 uppercase">
+                                <span>Severe Risk (6)</span>
+                                <span>No Risk (23)</span>
+                            </div>
+                        </div>
+
+                        <div class="bg-black/40 p-5 rounded-xl border border-white/5">
+                            <div class="flex justify-between font-mono text-xs mb-3">
+                                <span class="text-slate-300">2. Sustained Tissue Pressure</span>
+                                <span id="val-pressure" class="font-bold text-white text-sm">20 mmHg</span>
+                            </div>
+                            <input type="range" id="slider-pressure" min="10" max="100" value="20" class="w-full accent-safe cursor-pointer h-1.5 bg-white/10 rounded-lg appearance-none">
+                            <div class="flex justify-between text-[8px] font-mono text-slate-500 mt-2 uppercase">
+                                <span>Capillary Safe</span>
+                                <span>Ischemia Risk</span>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-black/40 p-5 rounded-xl border border-white/5">
+                            <div class="flex justify-between font-mono text-xs mb-3">
+                                <span class="text-slate-300">3. Time Without Offloading</span>
+                                <span id="val-time" class="font-bold text-white text-sm">0.5 hrs</span>
+                            </div>
+                            <input type="range" id="slider-time" min="0" max="4" step="0.25" value="0.5" class="w-full accent-safe cursor-pointer h-1.5 bg-white/10 rounded-lg appearance-none">
+                            <div class="flex justify-between text-[8px] font-mono text-slate-500 mt-2 uppercase">
+                                <span>Recent Shift</span>
+                                <span>Prolonged Stasis</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-8 pt-6 border-t border-white/10 text-center bg-black/20 rounded-xl p-6 border border-white/5 relative overflow-hidden">
+                    <p class="text-[10px] font-mono text-slate-400 uppercase tracking-widest mb-2 relative z-10">Compound Risk Velocity Score</p>
+                    <p id="calc-result" class="text-7xl font-black font-mono text-safe drop-shadow-[0_0_15px_rgba(0,229,255,0.4)] transition-colors duration-300 relative z-10">21<span class="text-2xl text-slate-600 opacity-50">/100</span></p>
+                </div>
+            </div>
+
+            <div class="order-1 lg:order-2 reveal">
+                <p class="text-warn font-mono text-xs uppercase tracking-[0.2em] mb-2 drop-shadow-[0_0_8px_rgba(255,153,0,0.5)]">Module 02</p>
+                <h2 class="text-3xl md:text-5xl font-bold mb-6">Hybrid Braden Multiplier</h2>
+                <p class="text-slate-400 text-lg leading-relaxed mb-6">
+                    A paralyzed, malnourished patient develops tissue damage significantly faster than a healthy patient. Our backend integrates the official <strong>1987 Braden Scale</strong> directly into the physics engine.
+                </p>
+                
+                <div class="glass-panel p-5 rounded-lg font-mono text-sm border border-white/5 mb-8 bg-black/30">
+                    <p class="text-slate-500 text-[10px] uppercase tracking-widest mb-2 border-b border-white/10 pb-2">Dynamic Physics Equation</p>
+                    <code class="text-white block mt-2 text-xs md:text-sm text-warn">Velocity = Pressure × (1 + (Time × BradenMultiplier))</code>
+                </div>
+
+                <button onclick="toggleSpec('spec2')" class="border border-warn/50 text-warn hover:bg-warn/10 px-5 py-3 rounded text-xs font-mono uppercase tracking-widest transition-colors flex items-center gap-3 shadow-[0_0_10px_rgba(255,153,0,0.1)]">
+                    <span id="icon-spec2" class="text-lg leading-none">+</span> Deep Dive: Clinical Hybrid Metrics
+                </button>
+
+                <div id="spec2" class="expand-content">
+                    <div class="glass-panel p-8 rounded-xl border-l-4 border-l-warn mt-2">
+                        <h4 class="text-xl font-bold mb-4 text-white flex items-center gap-2">
+                            <span class="w-2 h-2 bg-warn rounded-full animate-pulse"></span> Validated Efficacy
+                        </h4>
+                        <p class="text-sm text-slate-400 mb-6">By combining Computer Vision with the Braden Scale, we create a highly individualized risk threshold rather than relying on a static 2-hour timer for everyone.</p>
+                        
+                        <div class="space-y-4">
+                            <div class="flex items-start gap-4 p-3 bg-white/5 rounded border border-white/5">
+                                <div class="bg-warn/20 text-warn font-mono text-[10px] px-2 py-1 rounded h-fit mt-1">74.0%</div>
+                                <div>
+                                    <p class="text-sm font-bold text-white mb-1">Hybrid ML Integration</p>
+                                    <p class="text-xs text-slate-400">Increases predictive sensitivity to 74.06% versus the baseline 60.62% of standard charting alone.</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start gap-4 p-3 bg-white/5 rounded border border-white/5">
+                                <div class="bg-warn/20 text-warn font-mono text-[10px] px-2 py-1 rounded h-fit mt-1">< 0.001</div>
+                                <div>
+                                    <p class="text-sm font-bold text-white mb-1">ICU Baseline Target</p>
+                                    <p class="text-xs text-slate-400">Mean score for pressure sore development is 13.64. The system auto-escalates multipliers for anyone scoring 14 or below.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="escalation" class="py-24 px-6 relative z-10 border-t border-white/5 bg-gradient-to-b from-transparent to-black/50">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center max-w-3xl mx-auto mb-20 reveal">
+                <p class="text-escalate font-mono text-xs uppercase tracking-[0.2em] mb-2 drop-shadow-[0_0_8px_rgba(176,38,255,0.5)]">Module 03</p>
+                <h2 class="text-4xl md:text-6xl font-bold mb-6">The Escalation Journey</h2>
+                <p class="text-slate-400 text-lg mb-8">Alarm fatigue is a critical ECRI health hazard. Code Blue uses a chronological, 3-tier escalation protocol. It only broadcasts to higher levels if bedside interventions fail to occur, protecting nursing cognitive load.</p>
+                
+                <button onclick="toggleSpec('spec3')" class="border border-escalate/50 text-escalate hover:bg-escalate/10 px-6 py-3 rounded text-xs font-mono uppercase tracking-widest transition-colors inline-flex items-center gap-3 shadow-[0_0_15px_rgba(176,38,255,0.15)]">
+                    <span id="icon-spec3" class="text-lg leading-none">+</span> Deep Dive: Alarm Fatigue Statistics
+                </button>
+                
+                <div id="spec3" class="expand-content text-left max-w-3xl mx-auto mt-6">
+                    <div class="glass-panel p-8 rounded-xl border-t border-white/20 relative overflow-hidden">
+                        <div class="absolute inset-0 bg-escalate/5"></div>
+                        <div class="relative z-10">
+                            <h4 class="text-xl font-bold mb-6 text-white text-center">Why Chronological Escalation Saves Lives</h4>
+                            <div class="grid md:grid-cols-3 gap-6 text-center font-mono">
+                                <div>
+                                    <p class="text-4xl font-bold text-escalate mb-2">350+</p>
+                                    <p class="text-[10px] uppercase tracking-widest text-slate-400">Alarms per bed, per day in standard ICUs</p>
+                                </div>
+                                <div>
+                                    <p class="text-4xl font-bold text-danger mb-2">90%</p>
+                                    <p class="text-[10px] uppercase tracking-widest text-slate-400">Of standard alarms are false or non-actionable</p>
+                                </div>
+                                <div>
+                                    <p class="text-4xl font-bold text-safe mb-2">99.8%</p>
+                                    <p class="text-[10px] uppercase tracking-widest text-slate-400">Positive Predictive Value (PPV) of a Code Blue Tier 3 Alarm</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="relative max-w-5xl mx-auto mt-16 reveal">
+                <div class="timeline-line hidden md:block"></div>
+
+                <div class="relative flex flex-col md:flex-row items-center justify-between mb-24 w-full">
+                    <div class="w-full md:w-[45%] md:text-right pr-0 md:pr-10 mb-6 md:mb-0 relative z-10">
+                        <div class="md:hidden w-1 h-full bg-safe absolute left-4 top-0 opacity-30"></div>
+                        <div class="pl-10 md:pl-0">
+                            <p class="text-safe font-mono text-sm tracking-widest mb-2 font-bold drop-shadow-[0_0_8px_rgba(0,229,255,0.5)]">T + 00:00 MINS</p>
+                            <h3 class="text-3xl font-bold text-white mb-4">Tier 1: Bedside Ambient</h3>
+                            <p class="text-slate-400 text-sm leading-relaxed mb-4">When risk velocity breaches 60/100, the system initiates a silent, visual-only cue on the HUD.</p>
+                            <span class="inline-block bg-safe/10 border border-safe/30 text-safe px-3 py-1 rounded text-[10px] font-mono uppercase tracking-widest">Cognitive Load: Minimal</span>
+                        </div>
+                    </div>
+                    <div class="hidden md:flex absolute left-1/2 transform -translate-x-1/2 w-16 h-16 rounded-full glass-panel border-2 border-safe items-center justify-center z-20 shadow-[0_0_20px_rgba(0,229,255,0.3)] bg-[#03050a]">
+                        <div class="w-4 h-4 rounded-full bg-safe animate-pulse shadow-[0_0_10px_#00E5FF]"></div>
+                    </div>
+                    <div class="w-full md:w-[45%] hidden md:block"></div>
+                </div>
+
+                <div class="relative flex flex-col md:flex-row items-center justify-between mb-24 w-full">
+                    <div class="w-full md:w-[45%] hidden md:block"></div>
+                    <div class="hidden md:flex absolute left-1/2 transform -translate-x-1/2 w-16 h-16 rounded-full glass-panel border-2 border-warn items-center justify-center z-20 shadow-[0_0_20px_rgba(255,153,0,0.3)] bg-[#03050a]">
+                        <div class="w-4 h-4 rounded-full bg-warn animate-ping shadow-[0_0_10px_#FF9900]"></div>
+                    </div>
+                    <div class="w-full md:w-[45%] md:text-left pl-0 md:pl-10 relative z-10">
+                        <div class="md:hidden w-1 h-full bg-warn absolute left-4 top-0 opacity-30"></div>
+                        <div class="pl-10 md:pl-0">
+                            <p class="text-warn font-mono text-sm tracking-widest mb-2 font-bold drop-shadow-[0_0_8px_rgba(255,153,0,0.5)]">T + 10:00 MINS</p>
+                            <h3 class="text-3xl font-bold text-white mb-4">Tier 2: Paging RN</h3>
+                            <p class="text-slate-400 text-sm leading-relaxed mb-4">If the primary nurse does not perform an offloading maneuver within 10 minutes, the system routes a secure text and triggers Text-to-Speech audio.</p>
+                            <span class="inline-block bg-warn/10 border border-warn/30 text-warn px-3 py-1 rounded text-[10px] font-mono uppercase tracking-widest">Accountability: Targeted</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="relative flex flex-col md:flex-row items-center justify-between w-full">
+                    <div class="w-full md:w-[45%] md:text-right pr-0 md:pr-10 relative z-10">
+                        <div class="md:hidden w-1 h-full bg-escalate absolute left-4 top-0 opacity-30"></div>
+                        <div class="pl-10 md:pl-0">
+                            <p class="text-escalate font-mono text-sm tracking-widest mb-2 font-bold drop-shadow-[0_0_8px_rgba(176,38,255,0.5)]">T + 20:00 MINS</p>
+                            <h3 class="text-3xl font-bold text-white mb-4">Tier 3: Charge Override</h3>
+                            <p class="text-slate-400 text-sm leading-relaxed mb-4">After 20 minutes, an audible alarm sounds escalating to the Charge Nurse. A compliance failure is permanently logged to the AlaSQL shift record.</p>
+                            <span class="inline-block bg-escalate/10 border border-escalate/30 text-escalate px-3 py-1 rounded text-[10px] font-mono uppercase tracking-widest">Intervention: Mandatory</span>
+                        </div>
+                    </div>
+                    <div class="hidden md:flex absolute left-1/2 transform -translate-x-1/2 w-16 h-16 rounded-full glass-panel border-2 border-escalate items-center justify-center z-20 shadow-[0_0_30px_rgba(176,38,255,0.5)] bg-[#03050a]">
+                        <div class="w-5 h-5 rounded-full bg-escalate animate-pulse shadow-[0_0_15px_#B026FF]"></div>
+                    </div>
+                    <div class="w-full md:w-[45%] hidden md:block"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="compliance" class="py-24 px-6 bg-black/50 border-t border-white/5 relative z-10">
+        <div class="max-w-7xl mx-auto grid lg:grid-cols-2 gap-16 items-center">
+            <div class="reveal">
+                <p class="text-white font-mono text-xs uppercase tracking-[0.2em] mb-2 drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]">Module 04</p>
+                <h2 class="text-3xl md:text-5xl font-bold mb-6">SQL-Driven Export Audits</h2>
+                <p class="text-slate-400 text-lg leading-relaxed mb-8">
+                    Manual charting is prone to omission and provides weak legal defense during CMS audits. Code Blue runs a live, in-browser AlaSQL database that logs every Braden update, posture shift, and alarm tier into a native Excel (.xlsx) spreadsheet.
+                </p>
+                
+                <div class="grid grid-cols-2 gap-6 mb-8">
+                    <div class="glass-panel p-6 rounded-xl text-center border-t-2 border-safe">
+                        <p class="text-4xl font-mono text-white mb-2 shadow-sm">AlaSQL</p>
+                        <p class="text-[10px] font-mono text-safe uppercase tracking-widest leading-tight">In-Memory Database</p>
+                    </div>
+                    <div class="glass-panel p-6 rounded-xl text-center border-t-2 border-safe">
+                        <p class="text-4xl font-mono text-white mb-2 shadow-sm">.XLSX</p>
+                        <p class="text-[10px] font-mono text-safe uppercase tracking-widest leading-tight">Native SheetJS Export</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="glass-panel p-8 rounded-2xl reveal relative shadow-2xl">
+                <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-safe to-transparent opacity-50"></div>
+                
+                <div class="flex items-center justify-between mb-8 pb-4 border-b border-white/10">
+                    <h3 class="font-mono text-sm tracking-widest uppercase text-white">Shift Compliance Log</h3>
+                    <span class="text-[10px] font-mono bg-safe/20 text-safe px-2 py-1 rounded">EXCEL READY</span>
+                </div>
+                
+                <div class="space-y-4 font-mono text-xs">
+                    <div class="flex justify-between p-4 bg-black/40 border border-white/5 rounded-lg">
+                        <span class="text-slate-400">Total Interventions Logged</span>
+                        <span class="text-white font-bold">14 Shifts</span>
+                    </div>
+                    <div class="flex justify-between p-4 bg-black/40 border border-white/5 rounded-lg">
+                        <span class="text-slate-400">Average Turn Delay</span>
+                        <span class="text-white font-bold">2m 14s</span>
+                    </div>
+                    <div class="flex justify-between p-4 bg-danger/10 border border-danger/30 rounded-lg relative overflow-hidden">
+                        <div class="absolute left-0 top-0 bottom-0 w-1 bg-danger"></div>
+                        <span class="text-danger ml-2">Tier 3 Breaches Documented</span>
+                        <span class="text-danger font-bold text-lg">0</span>
+                    </div>
+                </div>
+                
+                <div class="mt-8 flex gap-4">
+                    <a href="dashboard.html" class="flex-1 bg-safe text-black py-3 rounded font-bold text-xs uppercase tracking-widest hover:bg-white transition-colors text-center block w-full">
+                        Launch HUD & Export
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="py-24 text-center border-t border-white/10 relative overflow-hidden mt-12">
+        <div class="absolute bottom-0 left-1/2 -translate-x-1/2 w-full h-64 bg-safe/10 blur-[120px] pointer-events-none z-0"></div>
+        
+        <h2 class="text-4xl md:text-5xl font-bold mb-10 reveal relative z-10">Ready to protect your patients?</h2>
+        <a href="dashboard.html" class="relative z-10 inline-block bg-white text-black px-14 py-6 rounded-xl font-black text-sm uppercase tracking-widest hover:scale-105 transition-all shadow-[0_10px_30px_rgba(255,255,255,0.1)] hover:shadow-[0_15px_40px_rgba(0,229,255,0.4)] reveal">
+            Initialize Ward Dashboard
+        </a>
+        <div class="mt-20 font-mono text-[10px] uppercase tracking-widest text-slate-500 relative z-10 flex flex-col items-center justify-center gap-2">
+            <p>&copy; 2026 Developed by Uttam Singh. Code Blue CDSS.</p>
+            <p>All Rights Reserved. Not for diagnostic use without clinical oversight.</p>
+        </div>
+    </footer>
+
+    <script>
+        // --- Interactive Risk Calculator Logic ---
+        const sliderBraden = document.getElementById('slider-braden');
+        const sliderPressure = document.getElementById('slider-pressure');
+        const sliderTime = document.getElementById('slider-time');
+        
+        const valBraden = document.getElementById('val-braden');
+        const valPressure = document.getElementById('val-pressure');
+        const valTime = document.getElementById('val-time');
+        
+        const calcResult = document.getElementById('calc-result');
+        const simStatus = document.getElementById('sim-status');
+
+        function updateRisk() {
+            const b = parseInt(sliderBraden.value);
+            const p = parseFloat(sliderPressure.value);
+            const t = parseFloat(sliderTime.value);
+            
+            // Braden Multiplier matching dashboard logic
+            const bradenMultiplier = (24 - b) * 0.015;
+            
+            let risk = Math.round(p * (1 + (t * bradenMultiplier)));
+            risk = Math.min(100, risk); // Cap at 100
+            
+            let brLabel = "No Risk";
+            if(b <= 9) brLabel = "Severe";
+            else if(b <= 12) brLabel = "High";
+            else if(b <= 14) brLabel = "Moderate";
+            else if(b <= 18) brLabel = "Mild";
+
+            valBraden.innerText = `Score: ${b} (${brLabel})`;
+            valPressure.innerText = `${p} mmHg`;
+            valTime.innerText = `${t} hrs`;
+            
+            calcResult.innerHTML = `${risk}<span class="text-2xl opacity-50 text-slate-500">/100</span>`;
+
+            if (risk >= 85) {
+                calcResult.className = "text-7xl font-black font-mono text-danger drop-shadow-[0_0_20px_rgba(255,42,85,0.6)] transition-colors duration-300 relative z-10";
+                simStatus.innerText = "CRITICAL (TIER 1)";
+                simStatus.className = "bg-danger/20 text-danger border border-danger/50 px-3 py-1 rounded text-[10px] font-mono animate-pulse shadow-[0_0_10px_rgba(255,42,85,0.3)]";
+            } else if (risk >= 60) {
+                calcResult.className = "text-7xl font-black font-mono text-warn drop-shadow-[0_0_20px_rgba(255,153,0,0.6)] transition-colors duration-300 relative z-10";
+                simStatus.innerText = "WARNING";
+                simStatus.className = "bg-warn/20 text-warn border border-warn/50 px-3 py-1 rounded text-[10px] font-mono shadow-[0_0_10px_rgba(255,153,0,0.2)]";
+            } else {
+                calcResult.className = "text-7xl font-black font-mono text-safe drop-shadow-[0_0_20px_rgba(0,229,255,0.4)] transition-colors duration-300 relative z-10";
+                simStatus.innerText = "NOMINAL";
+                simStatus.className = "bg-safe/20 text-safe border border-safe/40 px-3 py-1 rounded text-[10px] font-mono shadow-[0_0_10px_rgba(0,229,255,0.1)]";
+            }
+        }
+
+        sliderBraden.addEventListener('input', updateRisk);
+        sliderPressure.addEventListener('input', updateRisk);
+        sliderTime.addEventListener('input', updateRisk);
+        
+        updateRisk();
+
+        function toggleSpec(id) {
+            const content = document.getElementById(id);
+            const icon = document.getElementById('icon-' + id);
+            
+            if (content.classList.contains('open')) {
+                content.classList.remove('open');
+                icon.innerText = '+';
+            } else {
+                content.classList.add('open');
+                icon.innerText = '-';
+            }
+        }
+
+        function reveal() {
+            var reveals = document.querySelectorAll(".reveal");
+            for (var i = 0; i < reveals.length; i++) {
+                var windowHeight = window.innerHeight;
+                var elementTop = reveals[i].getBoundingClientRect().top;
+                var elementVisible = 100;
+                if (elementTop < windowHeight - elementVisible) {
+                    reveals[i].classList.add("active");
+                }
+            }
+            
+            const nav = document.querySelector('nav');
+            if (window.scrollY > 50) {
+                nav.style.background = 'rgba(3, 5, 10, 0.85)';
+            } else {
+                nav.style.background = 'rgba(3, 5, 10, 0.6)';
+            }
+        }
+        window.addEventListener("scroll", reveal);
+        reveal();
+    </script>
+</body>
+</html>

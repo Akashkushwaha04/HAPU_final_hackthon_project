@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code Blue | Enterprise Spatial HUD</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/three@0.128.0/build/three.min.js"></script>
+    <script src="https://unpkg.com/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://unpkg.com/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/alasql@4"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;500;700&family=Inter:wght@300;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    
+    <script>
+        tailwind.config = { 
+            darkMode: 'class', 
+            theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'], mono: ['Rajdhani', 'monospace'] }, colors: { safe: '#00E5FF', warn: '#FFaa00', danger: '#FF003C', escalate: '#B026FF', hud: 'rgba(4, 11, 20, 0.75)' } } } 
+        }
+    </script>
+</head>
+<body>
+
+    <div id="canvas-container"></div>
+    <div class="scanlines"></div>
+
+    <div class="fixed top-0 left-0 w-full z-50 flex justify-center pointer-events-none">
+        <div class="bg-black/80 border-b border-x border-safe/30 px-6 py-1 flex gap-6 items-center rounded-b-lg backdrop-blur-md">
+            <div class="flex items-center gap-2"><div class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div><span class="text-[8px] font-mono text-safe uppercase tracking-widest">TLS 1.3 SECURE</span></div>
+            <div class="flex items-center gap-2"><span class="text-[8px] font-mono text-slate-400 uppercase tracking-widest">CV WEBSOCKET LINK ACTIVE</span></div>
+            <div class="flex items-center gap-2 border-l border-white/10 pl-6 font-bold"><span class="text-[8px] font-mono text-warn uppercase tracking-widest">AUTH: LEVEL 4 (RN_PRIMARY)</span></div>
+        </div>
+    </div>
+
+    <div class="app-layout">
+        
+        <header class="flex justify-between items-start w-full panel-interactive shrink-0">
+            <div class="hud-panel px-6 py-4 flex flex-col min-w-[320px]">
+                <div class="flex items-center gap-3 mb-1">
+                    <div class="w-3 h-3 bg-safe rounded-sm shadow-[0_0_10px_#00E5FF] animate-pulse"></div>
+                    <h1 class="hud-title text-xl">CODE BLUE // CDSS</h1>
+                </div>
+                <p class="text-[9px] font-mono text-slate-400 tracking-[0.2em] uppercase">ABDM COMPLIANT ECOSYSTEM</p>
+            </div>
+
+            <div class="flex gap-3 pointer-events-auto h-fit">
+                <button onclick="manualRotate()" class="bg-safe/20 border border-safe text-safe hover:bg-safe/40 font-mono text-[9px] tracking-widest px-3 py-1.5 rounded-sm transition-all uppercase backdrop-blur-md shadow-[0_0_15px_rgba(0,229,255,0.3)]">[ ROTATE PATIENT ]</button>
+                <button id="fullscreen-toggle" onclick="toggleFullScreen()" class="bg-black/50 border border-safe/30 text-safe hover:bg-safe/20 font-mono text-[9px] tracking-widest px-3 py-1.5 rounded-sm transition-all uppercase backdrop-blur-md">[ FULLSCREEN ]</button>
+                <button id="sound-toggle" onclick="toggleAudio()" class="bg-danger/20 border border-danger text-danger hover:bg-danger/40 font-mono text-[9px] tracking-widest px-3 py-1.5 rounded-sm transition-all uppercase backdrop-blur-md animate-pulse">[ AUDIO : OFF ]</button>
+                <button onclick="toggleModal('report-modal')" class="bg-black/50 border border-white/30 text-white hover:bg-white/20 font-mono text-[9px] tracking-widest px-3 py-1.5 rounded-sm transition-all uppercase backdrop-blur-md">[ EXPORT LOG ]</button>
+                <button onclick="forceDemoSpike()" class="bg-warn/20 border border-warn text-warn hover:bg-warn/40 font-mono text-[9px] tracking-widest px-3 py-1.5 rounded-sm transition-all uppercase backdrop-blur-md shadow-[0_0_15px_rgba(255,170,0,0.3)]">[ DEMO OVERRIDE ]</button>
+            </div>
+        </header>
+
+        <div class="absolute top-28 left-5 w-[320px] bottom-56 flex flex-col gap-4 pointer-events-none">
+            <div class="hud-panel p-4 flex flex-col gap-3 pointer-events-auto shrink-0">
+                <h3 class="hud-title border-b border-safe/20 pb-2 mb-1">Telemetry // PA_04</h3>
+                <div class="flex justify-between items-center"><span class="text-[9px] text-slate-500 font-mono uppercase tracking-widest">Device UUID</span><span class="text-[9px] font-mono text-safe">8842-XF9-P04</span></div>
+                <div class="flex justify-between items-center"><span class="text-[9px] text-slate-400 font-mono uppercase tracking-widest">Current Posture</span><span id="current-position-tel" class="hud-data text-xs text-safe border border-safe/30 px-1.5 rounded-sm bg-safe/10">SUPINE</span></div>
+                <div class="flex justify-between items-center"><span class="text-[9px] text-slate-400 font-mono uppercase tracking-widest">BPM</span><span id="hud-bpm" class="hud-data text-xl text-white">72</span></div>
+                <div class="flex justify-between items-center"><span class="text-[9px] text-slate-400 font-mono uppercase tracking-widest">SpO2</span><span id="hud-spo2" class="hud-data text-xl text-safe">96%</span></div>
+                
+                <div class="flex justify-between items-center mt-1 pt-2 border-t border-white/10">
+                    <span class="text-[9px] text-slate-400 font-mono uppercase tracking-widest">Braden Index</span>
+                    <div class="flex gap-2 items-center">
+                        <span id="hud-braden" class="hud-data text-xs text-warn border border-warn/30 px-1.5 rounded-sm bg-warn/10">14 (MODERATE)</span>
+                        <button onclick="document.getElementById('braden-panel').classList.toggle('open')" class="text-[8px] bg-white/10 hover:bg-safe/20 text-safe border border-safe/30 px-1.5 py-0.5 uppercase tracking-wider font-mono transition-colors">Assess</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="hud-panel p-4 flex flex-col overflow-hidden pointer-events-auto flex-1 min-h-[100px]">
+                <h3 class="hud-title border-b border-safe/20 pb-2 mb-2">Ward Triage</h3>
+                <div class="flex flex-col gap-2 overflow-y-auto pr-1">
+                    <div class="bg-white/5 border border-white/10 p-2 flex justify-between items-center opacity-50"><span class="text-xs font-mono text-white">BED 01 // Smith</span><div class="w-1.5 h-1.5 bg-safe"></div></div>
+                    <div class="bg-safe/20 border border-safe/50 p-2 flex justify-between items-center shadow-[inset_0_0_10px_rgba(0,229,255,0.2)]"><span class="text-xs font-mono text-safe font-bold">> BED 04 // Doe</span><div id="ward-active-dot" class="w-2 h-2 bg-safe shadow-[0_0_8px_#00E5FF] animate-pulse"></div></div>
+                    <div class="bg-white/5 border border-white/10 p-2 flex justify-between items-center opacity-50"><span class="text-xs font-mono text-white">BED 05 // Chen</span><div class="w-1.5 h-1.5 bg-warn"></div></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="absolute top-28 right-5 w-[320px] bottom-36 flex flex-col gap-4 pointer-events-none">
+            <div class="hud-panel p-4 flex flex-col overflow-hidden h-[35%] pointer-events-auto shrink-0">
+                <div class="flex justify-between items-end border-b border-safe/20 pb-2 mb-2">
+                    <h3 class="hud-title">Active Interventions</h3>
+                    <span id="alert-badge" class="text-[9px] font-mono text-slate-400">0 PENDING</span>
+                </div>
+                <div id="alert-container" class="flex flex-col gap-2 overflow-y-auto pr-1 flex-grow">
+                    <div id="empty-alert-msg" class="flex flex-col items-center justify-center h-full opacity-30"><span class="text-[10px] font-mono text-safe tracking-widest uppercase">Nodes Stabilized</span></div>
+                </div>
+            </div>
+
+            <div class="hud-panel p-4 flex flex-col h-[25%] pointer-events-auto shrink-0">
+                <h3 class="hud-title border-b border-safe/20 pb-1 mb-1 text-[9px]">Risk Velocity Graph</h3>
+                <div class="flex-grow w-full relative"><canvas id="riskChart"></canvas></div>
+            </div>
+
+            <div class="hud-panel p-4 flex flex-col bg-safe/5 overflow-hidden pointer-events-auto flex-1 min-h-[100px]">
+                <h3 class="hud-title border-b border-safe/20 pb-1 mb-2 text-[9px] flex items-center justify-between">
+                    <span class="flex items-center gap-2"><div class="w-1 h-1 bg-safe animate-ping"></div> SYSTEM AUDIT LOG</span>
+                    <span class="text-[7px] text-slate-500">REALTIME</span>
+                </h3>
+                <div id="ai-terminal" class="flex-grow overflow-y-auto text-[10px] font-mono flex flex-col gap-1 pr-1">
+                    <div class="text-slate-500 mb-1">>> Handshake secure. Logging initialized.</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="absolute bottom-5 left-5 w-[320px] pointer-events-auto z-40">
+            <div class="hud-panel p-5 flex flex-col items-center justify-center w-full">
+                <h3 class="hud-title text-[10px] w-full border-b border-safe/20 pb-1 mb-3 flex justify-between">
+                    <span class="flex items-center gap-2"><div class="w-1.5 h-1.5 bg-safe animate-pulse"></div> WHEEL OF CHANGE</span>
+                    <span id="turn-timer" class="text-white font-bold text-sm tracking-wider">02:00:00</span>
+                </h3>
+                
+                <div class="flex w-full items-center gap-4">
+                    <div class="relative w-24 h-24 shrink-0">
+                        <svg class="w-full h-full transform -rotate-90 absolute inset-0 z-0" viewBox="0 0 100 100">
+                            <circle cx="50" cy="50" r="46" stroke="rgba(255,255,255,0.05)" stroke-width="2" fill="none"></circle>
+                            <circle id="turn-progress" cx="50" cy="50" r="46" stroke="#00E5FF" stroke-width="4" fill="none" stroke-dasharray="289" stroke-dashoffset="0" stroke-linecap="round"></circle>
+                            <g id="wheel-segments" transform="rotate(-22.5 50 50)">
+                                <circle id="seg-0" cx="50" cy="50" r="35" stroke="#00E5FF" stroke-width="12" stroke-dasharray="24 195.91" stroke-dashoffset="0" fill="none" class="transition-colors duration-500"></circle>
+                                <circle id="seg-1" cx="50" cy="50" r="35" stroke="rgba(0,229,255,0.15)" stroke-width="12" stroke-dasharray="24 195.91" stroke-dashoffset="-27.48" fill="none" class="transition-colors duration-500"></circle>
+                                <circle id="seg-2" cx="50" cy="50" r="35" stroke="rgba(0,229,255,0.15)" stroke-width="12" stroke-dasharray="24 195.91" stroke-dashoffset="-54.97" fill="none" class="transition-colors duration-500"></circle>
+                                <circle id="seg-3" cx="50" cy="50" r="35" stroke="rgba(0,229,255,0.15)" stroke-width="12" stroke-dasharray="24 195.91" stroke-dashoffset="-82.46" fill="none" class="transition-colors duration-500"></circle>
+                                <circle id="seg-4" cx="50" cy="50" r="35" stroke="rgba(0,229,255,0.15)" stroke-width="12" stroke-dasharray="24 195.91" stroke-dashoffset="-109.95" fill="none" class="transition-colors duration-500"></circle>
+                                <circle id="seg-5" cx="50" cy="50" r="35" stroke="rgba(0,229,255,0.15)" stroke-width="12" stroke-dasharray="24 195.91" stroke-dashoffset="-137.44" fill="none" class="transition-colors duration-500"></circle>
+                                <circle id="seg-6" cx="50" cy="50" r="35" stroke="rgba(0,229,255,0.15)" stroke-width="12" stroke-dasharray="24 195.91" stroke-dashoffset="-164.93" fill="none" class="transition-colors duration-500"></circle>
+                                <circle id="seg-7" cx="50" cy="50" r="35" stroke="rgba(0,229,255,0.15)" stroke-width="12" stroke-dasharray="24 195.91" stroke-dashoffset="-192.42" fill="none" class="transition-colors duration-500"></circle>
+                            </g>
+                        </svg>
+                        <div class="absolute inset-0 flex items-center justify-center z-10 text-[8px] font-mono text-safe font-bold tracking-widest leading-none text-center">ACT</div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-1 w-full text-[8px] font-mono font-bold tracking-wider">
+                        <div id="lbl-0" class="border border-safe bg-safe/20 text-safe px-1 py-1 text-center shadow-[0_0_8px_rgba(0,229,255,0.4)] transition-all">SUPINE</div>
+                        <div id="lbl-1" class="border border-white/10 text-slate-500 px-1 py-1 text-center transition-all">L. LATERAL</div>
+                        <div id="lbl-2" class="border border-white/10 text-slate-500 px-1 py-1 text-center transition-all">R. LATERAL</div>
+                        <div id="lbl-3" class="border border-white/10 text-slate-500 px-1 py-1 text-center transition-all">PRONE</div>
+                        <div id="lbl-4" class="border border-white/10 text-slate-500 px-1 py-1 text-center transition-all">FOWLER'S</div>
+                        <div id="lbl-5" class="border border-white/10 text-slate-500 px-1 py-1 text-center transition-all">SEMI-FOWL</div>
+                        <div id="lbl-6" class="border border-white/10 text-slate-500 px-1 py-1 text-center transition-all">TRENDEL</div>
+                        <div id="lbl-7" class="border border-white/10 text-slate-500 px-1 py-1 text-center transition-all">REV. TREND</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="absolute bottom-5 right-5 flex flex-col items-end pointer-events-auto z-40">
+            <span class="hud-title text-[11px] bg-black/80 px-3 py-1 border border-safe/30 text-safe mb-1">SPATIAL_RISK_INDEX</span>
+            <div id="risk-border" class="flex items-baseline gap-1 bg-black/40 backdrop-blur-lg px-6 py-2 border-r-4 border-b-4 border-safe/50 transition-colors duration-500">
+                <span id="global-risk-display" class="hud-data text-7xl text-safe drop-shadow-[0_0_20px_rgba(0,229,255,0.8)] transition-colors duration-500">28</span>
+                <span class="hud-data text-xl text-safe/50">/100</span>
+            </div>
+        </div>
+
+    </div>
+
+    <div id="report-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md" style="display:none" onclick="if(event.target===this){this.style.display='none';}">
+        <div class="w-full max-w-3xl mx-4 relative">
+            <button onclick="document.getElementById('report-modal').style.display='none';" class="absolute -top-2 -right-2 text-safe font-mono hover:text-white hover:bg-danger/30 transition-colors text-xl px-3 py-1 cursor-pointer z-[60] drop-shadow-[0_0_5px_#00E5FF] bg-black/80 border border-safe/50 rounded-sm" style="clip-path:none;">[ X ]</button>
+            <div class="hud-panel p-10 border border-white/20">
+                <div class="text-center mb-10 border-b border-safe/30 pb-4">
+                    <h2 class="hud-title text-2xl text-white">ENCRYPTED COMPLIANCE LOG</h2>
+                    <p class="font-mono text-[10px] text-safe mt-2 underline">SECURE HASH: 8f92j02m-4k11-90xs-8842</p>
+                </div>
+                <div class="grid grid-cols-3 gap-6 mb-10">
+                    <div class="bg-black/50 border border-safe/30 p-6 flex flex-col items-center"><p class="hud-title text-[10px] text-slate-400 mb-2">UPTIME</p><p class="hud-data text-4xl text-white" id="stat-uptime">0<span class="text-lg text-slate-500">H</span></p></div>
+                    <div class="bg-safe/10 border border-safe p-6 flex flex-col items-center shadow-[inset_0_0_20px_rgba(0,229,255,0.2)]"><p class="hud-title text-[10px] text-safe mb-2">ULCERS SAVED</p><p class="hud-data text-5xl text-safe" id="stat-prevented">0</p></div>
+                    <div class="bg-danger/10 border border-danger p-6 flex flex-col items-center shadow-[inset_0_0_20px_rgba(255,0,60,0.2)]"><p class="hud-title text-[10px] text-danger mb-2">PROTOCOL BREACH</p><p class="hud-data text-5xl text-danger" id="stat-breaches">0</p></div>
+                </div>
+                
+                <button onclick="downloadLog()" class="w-full bg-safe text-black font-mono font-bold tracking-widest py-4 hover:bg-white transition-colors shadow-[0_0_15px_rgba(0,229,255,0.2)]">GENERATE & DOWNLOAD COMPLIANCE LOG (EXCEL)</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="braden-panel">
+        <div class="panel-inner">
+            <div class="flex items-center justify-between mb-4 pb-2 border-b border-safe/30">
+                <div class="flex items-center gap-2">
+                    <div class="w-2 h-2 bg-safe rounded-full animate-pulse"></div>
+                    <h2 class="hud-title text-sm text-white">BRADEN SCALE ASSESSMENT</h2>
+                </div>
+                <button onclick="document.getElementById('braden-panel').classList.remove('open')" class="text-safe font-mono hover:text-white hover:bg-danger/30 transition-colors text-lg px-2 py-0.5 cursor-pointer drop-shadow-[0_0_5px_#00E5FF] bg-black/50 border border-safe/50 rounded-sm">X</button>
+            </div>
+
+            <div class="flex flex-col gap-3 font-mono text-xs">
+                <div class="flex flex-col gap-1">
+                    <label class="text-slate-400 tracking-widest uppercase text-[9px]">1. Sensory Perception</label>
+                    <select id="br-sensory" class="w-full">
+                        <option value="1">1. Completely Limited</option>
+                        <option value="2">2. Very Limited</option>
+                        <option value="3" selected>3. Slightly Limited</option>
+                        <option value="4">4. No Impairment</option>
+                    </select>
+                </div>
+                <div class="flex flex-col gap-1">
+                    <label class="text-slate-400 tracking-widest uppercase text-[9px]">2. Moisture</label>
+                    <select id="br-moisture" class="w-full">
+                        <option value="1">1. Constantly Moist</option>
+                        <option value="2" selected>2. Often Moist</option>
+                        <option value="3">3. Occasionally Moist</option>
+                        <option value="4">4. Rarely Moist</option>
+                    </select>
+                </div>
+                <div class="flex flex-col gap-1">
+                    <label class="text-slate-400 tracking-widest uppercase text-[9px]">3. Activity</label>
+                    <select id="br-activity" class="w-full">
+                        <option value="1" selected>1. Bedfast</option>
+                        <option value="2">2. Chairfast</option>
+                        <option value="3">3. Walks Occasionally</option>
+                        <option value="4">4. Walks Frequently</option>
+                    </select>
+                </div>
+                <div class="flex flex-col gap-1">
+                    <label class="text-slate-400 tracking-widest uppercase text-[9px]">4. Mobility</label>
+                    <select id="br-mobility" class="w-full">
+                        <option value="1">1. Completely Immobile</option>
+                        <option value="2">2. Very Limited</option>
+                        <option value="3" selected>3. Slightly Limited</option>
+                        <option value="4">4. No Limitations</option>
+                    </select>
+                </div>
+                <div class="flex flex-col gap-1">
+                    <label class="text-slate-400 tracking-widest uppercase text-[9px]">5. Nutrition</label>
+                    <select id="br-nutrition" class="w-full">
+                        <option value="1">1. Very Poor</option>
+                        <option value="2">2. Probably Inadequate</option>
+                        <option value="3" selected>3. Adequate</option>
+                        <option value="4">4. Excellent</option>
+                    </select>
+                </div>
+                <div class="flex flex-col gap-1">
+                    <label class="text-slate-400 tracking-widest uppercase text-[9px]">6. Friction &amp; Shear</label>
+                    <select id="br-friction" class="w-full">
+                        <option value="1">1. Problem</option>
+                        <option value="2" selected>2. Potential Problem</option>
+                        <option value="3">3. No Apparent Problem</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="mt-4 p-3 bg-safe/5 border border-safe/20 rounded-sm text-[9px] text-slate-300 font-mono">
+                <p class="text-safe font-bold mb-1 tracking-widest uppercase border-b border-safe/20 pb-1">CLINICAL CONTEXT &amp; ML METRICS</p>
+                <ul class="list-disc pl-3 space-y-0.5 mt-1 opacity-80">
+                    <li><span class="text-white">Hybrid ML:</span> 74.06% sensitivity vs 60.62% base</li>
+                    <li><span class="text-white">ICU Baseline:</span> Mean 13.64 (p &lt; 0.001)</li>
+                    <li><span class="text-white">ICC:</span> 0.90 - 0.92 reliability</li>
+                </ul>
+            </div>
+            
+            <button onclick="calculateBraden()" class="w-full mt-4 bg-safe/20 border border-safe text-safe font-mono font-bold tracking-widest py-3 text-xs hover:bg-safe hover:text-black transition-colors shadow-[0_0_15px_rgba(0,229,255,0.2)]">SAVE &amp; RECALIBRATE SENSORS</button>
+        </div>
+    </div>
+
+    <script src="myscript.js"></script>
+</body>
+</html>
